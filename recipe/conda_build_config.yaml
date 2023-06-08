@@ -1,0 +1,10 @@
+cuda_compiler:
+  - cuda-nvcc
+
+c_compiler:
+  - gcc      # [linux]
+  - vs2019   # [win]
+
+cxx_compiler:
+  - gxx      # [linux]
+  - vs2019   # [win]
