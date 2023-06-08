@@ -1,6 +1,8 @@
 # Usage
 
-NNVISR works like any VapourSynth plugin.
+NNVISR works like any VapourSynth plugin. You may take a look at
+[VapourSynth documentation](http://vapoursynth.com/doc/introduction.html)
+if you are not familiar with it.
 It registers the `nnvisr` namespace, and provide a single Function `Super`
 to perform enhancement.
 

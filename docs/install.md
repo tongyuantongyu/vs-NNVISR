@@ -11,11 +11,12 @@ or Linux x64 platform, and you already have a conda installation on your system.
 To create a new environment and install NNVISR, run:
 
 ```
-conda create -n nnvisr -c conda-forge -c nvidia -c tongyuantongyu --overide-channels vapoursynth-nnvisr
+conda create -n nnvisr -c conda-forge -c tongyuantongyu --overide-channels vapoursynth-nnvisr
 ```
 
 You can also install the VapourSynth FFMS2 plugin `vapoursynth-ffms2` to load
-video files, and MVTools plugin `vapoursynth-mvtools` to detect scene changes:
+video files, and MVTools plugin `vapoursynth-mvtools` to detect scene changes
+from my channel:
 
 ```
 conda install -c conda-forge -c tongyuantongyu --override-channels vapoursynth-ffms2 vapoursynth-mvtools
@@ -31,7 +32,8 @@ from conda-forge channel or installation may fail or does not work properly.
 Alternatively, you can manually install NNVISR into your existing
 VapourSynth installation on Windows. Prebuilt binary for Windows x64
 is provided in Release. Follow the VapourSynth documentation for how to load
-NNVISR plugin. For Linux, you have to build NNVISR yourself.
+NNVISR plugin. For Linux, you have to
+[build NNVISR](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/build.md) yourself.
 
 NNVISR depends on TensorRT 8.6 and CUDA 12 (cudart and cuBLAS components).
 You can either download and install TensorRT and CUDA,

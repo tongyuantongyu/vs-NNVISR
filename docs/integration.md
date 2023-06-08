@@ -127,7 +127,8 @@ The attributes of `DeformConv2d` are:
 | alpha             | float | Alpha parameter for activation, if applicable.                                                                  |
 | beta              | float | Beta parameter for activation, if applicable.                                                                   |
 
-For PyTorch, we provide a helper script `utils/deform_conv2d_helper.py`,
+For PyTorch, we provide a helper script
+[`utils/deform_conv2d_helper.py`](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/utils/deform_conv2d_helper.py),
 which configures PyTorch to automatically exports `deform_conv2d` from
 `torchvision` to `DeformConv2d` operator we recognize when exporting ONNX.
 
