@@ -459,6 +459,7 @@ void util_attrs copy(const md_uview<T, DIMS> &dst, const md_uview<T, DIMS> &src)
 }
 
 #include <string>
+#include <sstream>
 #include <ios>
 #include <iomanip>
 
