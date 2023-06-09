@@ -3,8 +3,8 @@ cuda_compiler:
 
 c_compiler:
   - gcc      # [linux]
-  - vs2019   # [win]
+  - vs2022   # [win]
 
 cxx_compiler:
   - gxx      # [linux]
-  - vs2019   # [win]
+  - vs2022   # [win]

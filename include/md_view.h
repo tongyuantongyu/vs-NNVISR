@@ -488,7 +488,6 @@ std::string describe(const md_view<T, DIMS> &view) {
   ss << describe(view.shape);
   ss << ")";
   return ss.str();
-
 }
 
 #endif //MDVIEW_H_

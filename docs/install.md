@@ -8,10 +8,17 @@ supported by TensorRT: Windows x64, Linux x64 and aarch64.
 Install using conda is the recommended method if you are on Windows x64
 or Linux x64 platform, and you already have a conda installation on your system.
 
-To create a new environment and install NNVISR, run:
+To create a new environment and install NNVISR on Linux, run:
 
 ```
 conda create -n nnvisr -c conda-forge -c tongyuantongyu --overide-channels vapoursynth-nnvisr
+```
+
+CUDA packages on `conda-forge` channel is currently incomplete on Windows,
+so you need to add NVIDIA's conda channel as well:
+
+```
+conda create -n nnvisr -c nvidia -c conda-forge -c tongyuantongyu --overide-channels vapoursynth-nnvisr
 ```
 
 You can also install the VapourSynth FFMS2 plugin `vapoursynth-ffms2` to load
