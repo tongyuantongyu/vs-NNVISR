@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <algorithm>
 
 #include <unordered_map>
 
