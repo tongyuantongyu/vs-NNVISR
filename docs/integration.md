@@ -1,6 +1,8 @@
 # Model Integration
 
 NNVISR supports loading any model following a general interface defined below.
+Example model files are available at
+[Models](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/models.md).
 
 ## Model requirement
 

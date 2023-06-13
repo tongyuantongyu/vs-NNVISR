@@ -8,7 +8,7 @@ to perform enhancement.
 
 ## Function interface
 
-The required parameters of `Super` are list below. Parameters denoted with (*)
+The required parameters of `Super` are list below. Parameters marked with (*)
 at end are determined by the network you are using, and should be provided
 along with the model file.
 
@@ -22,7 +22,7 @@ The optional parameters of `Super` are:
   This is default tobe the same as `scale_factor`. (*)
 - `batch_size_extract`: int. The batch size of Extract model. Default automatically
   selected depending on other parameters.
-- `batch_size_extract`: int. The batch size of Fusion model. Default to 1.
+- `batch_size_fusion`: int. The batch size of Fusion model. Default to 1.
 - `input_count`: int. The number of input frames network needed. Default to 1. (*)
 - `feature_count`: int. The "feature" (`C` channel) size. Default to 64. (*)
 - `extraction_layers`: int. The number of layers Extract model outputs. Default to 1. (*)
@@ -57,6 +57,8 @@ The optional parameters of `Super` are:
 The model files you got should be a folder. Place the whole folder
 under `{model_path}/models` to allow NNVISR to find it. To use the network,
 set `model` to the name of the folder you get when calling NNVISR.
+Model files available for use can be downloaded at
+[Models](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/models.md) page.
 
 ## Notes
 
