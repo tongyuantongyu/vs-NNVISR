@@ -6,6 +6,35 @@ To use, download from the link and put unzipped folder under `{model_path}/model
 and call `nnvisr.Super` with [function parameters marked with (*)](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/usage.md#function-interface)
 using values given under "Config" column.
 
+After unzipped, your `model_path` should look like this:
+
+```
+model_path
+└── models
+    ├── cycmunet
+    │   └── vimeo90k-deblur
+    │       └── yuv_1_1_1
+    │           ├── fe_n2_2x2_l4_yuv1-1.onnx
+    │           └── ff_n2_2x2_l4_yuv1-1.onnx
+    └── (... more models ...)
+```
+
+For a manual installation with default `model_path`, your VapoursSynth plugin folder should look like this:
+```
+vapoursynth64
+├── vs-nnvisr.dll
+└── dev.tyty.aim.nnvisr
+    └── models
+        ├── cycmunet
+        │   └── vimeo90k-deblur
+        │       └── yuv_1_1_1
+        │           ├── fe_n2_2x2_l4_yuv1-1.onnx
+        │           └── ff_n2_2x2_l4_yuv1-1.onnx
+        └── (... more models ...)
+
+```
+
+
 ## CycMuNet+
 
 Article:

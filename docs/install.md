@@ -21,12 +21,12 @@ so you need to add NVIDIA's conda channel as well:
 conda create -n nnvisr -c nvidia -c conda-forge -c tongyuantongyu --overide-channels vapoursynth-nnvisr
 ```
 
-You can also install the VapourSynth FFMS2 plugin `vapoursynth-ffms2` to load
-video files, and MVTools plugin `vapoursynth-mvtools` to detect scene changes
-from my channel:
+You can also install the VapourSynth BestSource plugin `vapoursynth-bestsource`
+to load video files, and MVTools plugin `vapoursynth-mvtools` to
+detect scene changes from my channel:
 
 ```
-conda install -c conda-forge -c tongyuantongyu --override-channels vapoursynth-ffms2 vapoursynth-mvtools
+conda install -c conda-forge -c tongyuantongyu --override-channels vapoursynth-bestsource vapoursynth-mvtools
 ```
 
 Note that NNVISR depends on the conda-forge channel which is **INCOMPATIBLE**

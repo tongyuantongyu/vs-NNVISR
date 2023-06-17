@@ -141,8 +141,8 @@ named correctly.
 
 ### Model folder structure
 
-All model files should be put into a folder with name of your choice. This
-name is used as the `model` argument when calling NNVISR filter.
+All model files should be put into a folder with name of your choice (can also have multiple levels).
+This name is used as the `model` argument when calling NNVISR filter.
 
 Inside it should be a number of folders to specify the I/O frame
 characteristics of your network, which stores the actual model files in ONNX
@@ -157,6 +157,9 @@ These numbers should be determined based on your dataset.
 If you are not sure, they are usually `primary=1`, `transfer=1` and `matrix=6`.
 However, we recommend train YUV network with configurations of `matrix=1`,
 since it's more widely used by videos.
+
+Refer to [Models](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/models.md) page
+for examples to arrange model files.
 
 ### Model name
 

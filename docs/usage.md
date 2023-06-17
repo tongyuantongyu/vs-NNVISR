@@ -6,6 +6,9 @@ if you are not familiar with it.
 It registers the `nnvisr` namespace, and provide a single Function `Super`
 to perform enhancement.
 
+[`example.vpy`](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/)
+provides a simplest example for how to use NNVISR.
+
 ## Function interface
 
 The required parameters of `Super` are list below. Parameters marked with (*)
