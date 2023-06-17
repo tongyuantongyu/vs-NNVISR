@@ -1124,6 +1124,7 @@ std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VS
         }
       }
       else {
+        assert(m + 1 == extract_begin);
         recycle_frames = 1;
       }
     }
@@ -1135,7 +1136,7 @@ std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VS
       int err;
       if (vsapi->mapGetInt(vsapi->getFramePropertiesRO(frame_in), "_SceneChangePrev", 0, &err)) {
         end_of_scene = true;
-        extract_end = m + loaded_frames;
+        extract_end = extract_begin + loaded_frames;
         break;
       }
     }
