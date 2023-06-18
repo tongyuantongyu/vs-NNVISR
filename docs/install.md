@@ -45,9 +45,7 @@ NNVISR plugin. For Linux, you have to
 [build NNVISR](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/build.md) yourself.
 
 NNVISR depends on TensorRT 8.6 and CUDA 12 (cudart and cuBLAS components).
-You can either download and install TensorRT and CUDA,
-and make sure their DLL libraries are in PATH,
-or place the DLL libraries along with NNVISR.
+For manual installation you have to place the DLL libraries along with NNVISR.
 Additionally, NNVISR may use cuDNN depending on the network.
 
 The TensorRT runtime DLLs for NNVISR can be downloaded at

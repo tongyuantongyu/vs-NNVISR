@@ -91,7 +91,9 @@ set_target_properties(vs-nnvisr PROPERTIES
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
         CUDA_VISIBILITY_PRESET hidden)
-if(MSVC)
+
+option(CONDA_BUILD_TWEAK "Tweak build options for releasing as conda package." OFF)
+if(MSVC AND CONDA_BUILD_TWEAK)
     target_link_libraries(vs-nnvisr PUBLIC delayimp)
     target_link_options(vs-nnvisr PUBLIC
             /DELAYLOAD:cudart64_12.dll
