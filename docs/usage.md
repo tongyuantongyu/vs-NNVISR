@@ -54,6 +54,9 @@ The optional parameters of `Super` are:
 - `model_path`: str. The path that stores the model files.
   Default to `dev.tyty.aim.nnvisr` folder under the folder of plugin
   DLL.
+- `engine_path`: str. Persistent cache dir to store TensorRT engine files.
+  Default to a path under `model_path` that is unique to current GPU and
+  TensorRT version.
 
 ## Adding network to NNVISR
 

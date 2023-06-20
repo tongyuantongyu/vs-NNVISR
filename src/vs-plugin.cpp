@@ -185,6 +185,7 @@ class NNVISRFilter {
 
   VSColorFamily color_family;
   std::filesystem::path model_path;
+  std::filesystem::path engine_path;
   std::filesystem::path model;
   InferenceConfig config;
   InferenceContext *ctx;
@@ -396,6 +397,13 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
   if (err) {
     model_path = vsapi->getPluginPath(vsapi->getPluginByID("dev.tyty.aim.nnvisr", core));
     model_path = model_path.remove_filename() / "dev.tyty.aim.nnvisr";
+  }
+
+  engine_path = safe_cstr(vsapi->mapGetData(in, "engine_path", 0, &err));
+  if (err) {
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, 0);
+    engine_path = model_path / "engines" / std::to_string(getInferLibVersion()) / prop.name;
   }
 
   std::string model_name = safe_cstr(vsapi->mapGetData(in, "model", 0, &err));
@@ -611,7 +619,7 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
     colorspace_folder = ss.str();
   }
 
-  ctx = new InferenceContext{config, *logger, model_path / "engines" / model / colorspace_folder};
+  ctx = new InferenceContext{config, *logger, engine_path / model / colorspace_folder};
 
   if (!ctx->has_file()) {
     vsapi->logMessage(mtInformation, "NNVISR: building engine for current resolution. This will take some time.", core);
@@ -631,7 +639,8 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
                                       config.use_fp16,
                                       config.low_mem},
                                      *logger,
-                                     model_path};
+                                     model_path,
+                                     engine_path};
 
     err = optimize_ctx.optimize(model / colorspace_folder);
     if (err) {
@@ -1511,6 +1520,7 @@ VapourSynthPluginInit2(VSPlugin
                            "raw_norm:int:opt;"
                            "model:data:opt;"
                            "model_path:data:opt;"
+                           "engine_path:data:opt;"
                            "low_mem:int:opt;",
                            "clip:vnode;", NNVISRCreate, nullptr, plugin);
   vspapi->registerFunction("Version", "", "", dependencyVersion, nullptr, plugin);

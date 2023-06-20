@@ -145,8 +145,9 @@ nvinfer1::INetworkDefinition *OptimizationContext::createNetwork() const {
 }
 
 OptimizationContext::OptimizationContext(OptimizationConfig config, nvinfer1::ILogger &logger,
-                                         std::filesystem::path path_prefix_)
-    : config(config), logger(logger), path_prefix(std::move(path_prefix_)),
+                                         std::filesystem::path path_prefix_,
+                                         std::filesystem::path path_engine_)
+    : config(config), logger(logger), path_prefix(std::move(path_prefix_)), path_engine(std::move(path_engine_)),
       builder(nvinfer1::createInferBuilder(logger)), cache(nullptr), prop {}, total_memory {} {
   auto conf = builder->createBuilderConfig();
   cudaMemGetInfo(nullptr, &total_memory);
@@ -161,7 +162,7 @@ OptimizationContext::OptimizationContext(OptimizationConfig config, nvinfer1::IL
     }
   }
 
-  auto cache_file = path_prefix / "timing.cache";
+  auto cache_file = path_engine / "timing.cache";
   std::ifstream input(cache_file, std::ios::binary | std::ios::in);
   if (input.is_open()) {
     auto size = std::filesystem::file_size(cache_file);
@@ -178,7 +179,7 @@ OptimizationContext::OptimizationContext(OptimizationConfig config, nvinfer1::IL
 
 OptimizationContext::~OptimizationContext() {
   if (cache != nullptr) {
-    std::ofstream output(path_prefix / "timing.cache", std::ios::binary | std::ios::out);
+    std::ofstream output(path_engine / "timing.cache", std::ios::binary | std::ios::out);
     auto memory = cache->serialize();
     output.write(static_cast<char *>(memory->data()), memory->size());
     output.close();
@@ -186,7 +187,7 @@ OptimizationContext::~OptimizationContext() {
 }
 
 int OptimizationContext::optimize(const std::filesystem::path &folder) {
-  auto fe_target = path_prefix / "engines" / folder / fe_engine_name(config);
+  auto fe_target = path_engine / folder / fe_engine_name(config);
   if (!exists(fe_target)) {
     auto fe_source_file = path_prefix / "models" / folder / ("fe" + model_name_suffix(config));
     std::ifstream input_fe(fe_source_file, std::ios::binary | std::ios::in);
@@ -199,7 +200,7 @@ int OptimizationContext::optimize(const std::filesystem::path &folder) {
     }
   }
 
-  auto ff_target = path_prefix / "engines" / folder / ff_engine_name(config);
+  auto ff_target = path_engine / folder / ff_engine_name(config);
   if (!exists(ff_target)) {
     auto ff_source_file = path_prefix / "models" / folder / ("ff" + model_name_suffix(config));
     std::ifstream input_ff(ff_source_file, std::ios::binary | std::ios::in);

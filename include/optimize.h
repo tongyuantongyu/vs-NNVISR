@@ -20,6 +20,7 @@ class OptimizationContext {
   OptimizationConfig config;
   nvinfer1::ILogger &logger;
   std::filesystem::path path_prefix;
+  std::filesystem::path path_engine;
 
   nvinfer1::IBuilder *builder;
   nvinfer1::ITimingCache *cache;
@@ -33,7 +34,7 @@ class OptimizationContext {
   int buildFeatureFusion(std::vector<uint8_t> input, const std::filesystem::path& output);
 
  public:
-  OptimizationContext(OptimizationConfig config, nvinfer1::ILogger &logger, std::filesystem::path path_prefix);
+  OptimizationContext(OptimizationConfig config, nvinfer1::ILogger &logger, std::filesystem::path path_prefix, std::filesystem::path path_engine);
   int optimize(const std::filesystem::path &folder);
   ~OptimizationContext();
 };
