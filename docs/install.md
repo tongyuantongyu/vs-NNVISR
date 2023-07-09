@@ -61,3 +61,4 @@ Some version of cuBLAS need nvrtc, which can be downloaded from
 
 cuDNN can be downloaded from
 [cuDNN release page](https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.2.26_cuda12-archive.zip).
+cuDNN depends on `zlib`, namely `zlibwapi.dll`, which can be downloaded from [this link](http://www.winimage.com/zLibDll/zlib123dllx64.zip).
