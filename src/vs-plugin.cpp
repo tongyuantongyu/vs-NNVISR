@@ -8,6 +8,13 @@
 
 #include <unordered_map>
 
+#if defined(_MSC_VER) && !defined(IS_CONDA_BUILD)
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <libloaderapi.h>
+#endif
+
 #include "NvInfer.h"
 #include "cuda_runtime_api.h"
 #include <cuda_fp16.h>
@@ -622,6 +629,43 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
   ctx = new InferenceContext{config, *logger, engine_path / model / colorspace_folder};
 
   if (!ctx->has_file()) {
+#if defined(_MSC_VER) && !defined(IS_CONDA_BUILD)
+    // Dirty hack, but that's what you must pay if you want to fight with system default...
+
+    // So here's the case:
+    //  - By default Windows only search current *APPLICATION* dir for DLL dependencies, but not current DLL dir.
+    //  - VapourSynth wants plugins and their dependencies to be packed together in the special "plugin dir",
+    //    which is - fortunately and unfortunately - *NOT* the application dir. It tweaks `LoadLibrary` call to
+    //    load the plugin correctly with non-default `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR` flag.
+    //  - However TensorRT and CUDA and cuDNN libraries are huge, and it's reasonable to lazy load them
+    //    (and load each other) - which in turn loads dependencies, but with *DEFAULT* flag.
+    //    And can't find them. Eww.
+    //  - `AddDllDirectory` should generally be avoided, especially in libraries. But I really don't bother loading
+    //    every library manually beforehand as it ruins the whole point of lazy loading.
+    //    And I also don't bother instrumenting the `LoadLibrary` call.
+    //    So either this directory is the autoloading directory, in which case it has the same effect of adding
+    //    `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR` to all `LoadLibrary` call, which VapourSynth is already doing anyway.
+    //    Or there's only NNVISR and it's dependencies under this directory. If this introduce DLL conflict,
+    //    then DLL conflict will happen anyway, because NNVISR will need them sooner or later.
+    //  - And VapourSynth intentionally prevent plugins loading DLLs from PATH, unless with `altsearchpath=True`.
+    //    Probably for good reason. For conda build we are circumventing this by lazy loading our dependencies as well,
+    //    which are installed in PATH instead of plugin dir.
+    //  - Hope there's no more issues.
+    std::filesystem::path plugin_path = vsapi->getPluginPath(vsapi->getPluginByID("dev.tyty.aim.nnvisr", core));
+    plugin_path.remove_filename();
+
+    // We don't know if user used "altsearchpath" when calling `LoadPlugin`.
+    // Guess from whether user placed dependencies at the plugin directory.
+    if (exists(plugin_path / "nvinfer_builder_resource.dll")) {
+      vsapi->logMessage(mtDebug,
+                        "NNVISR: dependencies under plugin path. Adding plugin directory to dll search directory.",
+                        core);
+      SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+      AddDllDirectory(std::filesystem::path(
+          vsapi->getPluginPath(vsapi->getPluginByID("dev.tyty.aim.nnvisr", core))).remove_filename().c_str());
+    }
+#endif
+
     vsapi->logMessage(mtInformation, "NNVISR: building engine for current resolution. This will take some time.", core);
     OptimizationContext optimize_ctx{{config.input_width,
                                       config.input_height,
@@ -641,7 +685,6 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
                                      *logger,
                                      model_path,
                                      engine_path};
-
     err = optimize_ctx.optimize(model / colorspace_folder);
     if (err) {
       return "NNVISR: failed building engine for current input dimension";

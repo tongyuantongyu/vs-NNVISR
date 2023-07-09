@@ -94,6 +94,7 @@ set_target_properties(vs-nnvisr PROPERTIES
 
 option(CONDA_BUILD_TWEAK "Tweak build options for releasing as conda package." OFF)
 if(MSVC AND CONDA_BUILD_TWEAK)
+    target_compile_definitions(vs-nnvisr PRIVATE IS_CONDA_BUILD)
     target_link_libraries(vs-nnvisr PUBLIC delayimp)
     target_link_options(vs-nnvisr PUBLIC
             /DELAYLOAD:cudart64_12.dll

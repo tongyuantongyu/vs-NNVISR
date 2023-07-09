@@ -149,6 +149,10 @@ OptimizationContext::OptimizationContext(OptimizationConfig config, nvinfer1::IL
                                          std::filesystem::path path_engine_)
     : config(config), logger(logger), path_prefix(std::move(path_prefix_)), path_engine(std::move(path_engine_)),
       builder(nvinfer1::createInferBuilder(logger)), cache(nullptr), prop {}, total_memory {} {
+  if (!builder) {
+    logger.log(nvinfer1::ILogger::Severity::kINTERNAL_ERROR, "Cannot create infer builder");
+    return;
+  }
   auto conf = builder->createBuilderConfig();
   cudaMemGetInfo(nullptr, &total_memory);
   cudaGetDeviceProperties(&prop, 0);
