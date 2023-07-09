@@ -1,5 +1,5 @@
 {% set name = "VapourSynth-NNVISR" %}
-{% set version = "1.0.0a2" %}
+{% set version = "1.0.0a3" %}
 
 package:
   name: {{ name|lower }}
