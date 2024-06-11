@@ -1,10 +1,10 @@
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <filesystem>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <algorithm>
 
 #include <unordered_map>
 
@@ -34,12 +34,7 @@
 // Utils
 
 class Logger : public nvinfer1::ILogger {
-  typedef void(VS_CC
-      *logMessage_t)(
-      int msgType,
-      const char *msg, VSCore
-      *core)
-      VS_NOEXCEPT;
+  typedef void(VS_CC *logMessage_t)(int msgType, const char *msg, VSCore *core) VS_NOEXCEPT;
 
  public:
   Logger(VSCore *core, logMessage_t logMessage) : core(core), logMessage(logMessage) {}
@@ -105,8 +100,10 @@ struct scale_ratios_t {
   };
 };
 
-const std::array<float, 3> default_norm_mean = {0.485, 0.456, 0.406};
-const std::array<float, 3> default_norm_std = {0.229, 0.224, 0.225};
+//const std::array<float, 3> default_norm_mean = {0.485, 0.456, 0.406};
+//const std::array<float, 3> default_norm_std = {0.229, 0.224, 0.225};
+const std::array<float, 3> default_norm_mean = {0, 0, 0};
+const std::array<float, 3> default_norm_std = {1, 1, 1};
 
 struct color_space_t {
   VSColorPrimaries cp;
@@ -149,7 +146,7 @@ struct colorPrimariesEntry {
   float primaries[8];// rX, rY, gX, gY, bX, bY, wX, wY
 };
 
-const std::array<colorPrimariesEntry, 11> colorPrimariesTable{
+const std::array<colorPrimariesEntry, 11> colorPrimariesTable {
     {{VSC_PRIMARIES_BT709, {0.64f, 0.33f, 0.3f, 0.6f, 0.15f, 0.06f, 0.3127f, 0.329f}},
      {VSC_PRIMARIES_BT470_M, {0.67f, 0.33f, 0.21f, 0.71f, 0.14f, 0.08f, 0.310f, 0.316f}},
      {VSC_PRIMARIES_BT470_BG, {0.64f, 0.33f, 0.29f, 0.60f, 0.15f, 0.06f, 0.3127f, 0.3290f}},
@@ -168,12 +165,12 @@ struct matrixCoefficientsEntry {
   const float kb;
 };
 
-const std::array<matrixCoefficientsEntry, 6> matrixCoefficientsTable{{{VSC_MATRIX_BT709, 0.2126f, 0.0722f},
-                                                                      {VSC_MATRIX_FCC, 0.30f, 0.11f},
-                                                                      {VSC_MATRIX_BT470_BG, 0.299f, 0.114f},
-                                                                      {VSC_MATRIX_ST170_M, 0.299f, 0.114f},
-                                                                      {VSC_MATRIX_ST240_M, 0.212f, 0.087f},
-                                                                      {VSC_MATRIX_BT2020_NCL, 0.2627f, 0.0593f}}};
+const std::array<matrixCoefficientsEntry, 6> matrixCoefficientsTable {{{VSC_MATRIX_BT709, 0.2126f, 0.0722f},
+                                                                       {VSC_MATRIX_FCC, 0.30f, 0.11f},
+                                                                       {VSC_MATRIX_BT470_BG, 0.299f, 0.114f},
+                                                                       {VSC_MATRIX_ST170_M, 0.299f, 0.114f},
+                                                                       {VSC_MATRIX_ST240_M, 0.212f, 0.087f},
+                                                                       {VSC_MATRIX_BT2020_NCL, 0.2627f, 0.0593f}}};
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Filter
@@ -202,7 +199,7 @@ class NNVISRFilter {
   scale_ratios_t norm, denorm;
   Logger *logger;
   float y_min, y_max, uv_min, uv_max;
-  uint8_t *ioBuffer[2]{};
+  uint8_t *ioBuffer[2] {};
   uint8_t *ioPointer[6];
   shape_t<2> input_shape_y, input_shape_uv, output_shape_y, output_shape_uv;
   shape_t<2> input_tensor_y, input_tensor_uv, output_tensor_y, output_tensor_uv;
@@ -225,7 +222,7 @@ class NNVISRFilter {
 
   void trace(const std::string &info) {
     // no fold
-//         logger->log(Logger::Severity::kWARNING, "NNVISR Trace: " + info);
+    //         logger->log(Logger::Severity::kWARNING, "NNVISR Trace: " + info);
   }
 
  public:
@@ -243,7 +240,7 @@ class NNVISRFilter {
     auto err = cudaStreamSynchronize(session->stream);
     if (err != cudaSuccess) {
       return std::string("NNVISR: failed synchronize CUDA stream: ") + cudaGetErrorName(cudaError_t(err)) + " (" +
-          cudaGetErrorString(cudaError_t(err)) + ").";
+             cudaGetErrorString(cudaError_t(err)) + ").";
     }
 
     return "";
@@ -253,7 +250,7 @@ class NNVISRFilter {
 std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsapi) {
   int err;
 
-  logger = new Logger{core, vsapi->logMessage};
+  logger = new Logger {core, vsapi->logMessage};
 
   // Get a clip reference from the input arguments. This must be freed later.
   node = vsapi->mapGetNode(in, "clip", 0, nullptr);
@@ -261,6 +258,7 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
   num_frames = vi.numFrames;
   extract_begin = 0;
   extract_end = 0;
+  //  trace("extract_end at " + std::to_string(extract_end));
   end_of_scene = true;
   last_output_frame = -1;
 
@@ -285,7 +283,7 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
   }
   color_family = VSColorFamily(vi.format.colorFamily);
 
-  std::array<float, 3> tmp{};
+  std::array<float, 3> tmp {};
   err = getFloatArray("norm_mean", tmp, in, vsapi, default_norm_mean);
   if (err) {
     return "NNVISR: norm_mean should have 3 values";
@@ -408,7 +406,7 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
 
   engine_path = safe_cstr(vsapi->mapGetData(in, "engine_path", 0, &err));
   if (err) {
-    cudaDeviceProp prop{};
+    cudaDeviceProp prop {};
     cudaGetDeviceProperties(&prop, 0);
     engine_path = model_path / "engines" / std::to_string(getInferLibVersion()) / prop.name;
   }
@@ -426,9 +424,9 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
     low_mem = false;
   }
 
-  config = {int32_t(vi.width), int32_t(vi.height), batch_size, batch_size_fusion, input_count,
-            feature_count, extraction_layers, extra_frame, double_frame, interpolation,
-            scale_factor, scale_factor_h, format, use_fp16, low_mem};
+  config = {int32_t(vi.width), int32_t(vi.height), batch_size,  batch_size_fusion, input_count,
+            feature_count,     extraction_layers,  extra_frame, double_frame,      interpolation,
+            scale_factor,      scale_factor_h,     format,      use_fp16,          low_mem};
 
   vo = vi;
   vo.width = int(double(scale_factor) * vo.width);
@@ -445,8 +443,7 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
       return "NNVISR: invalid out_format";
     }
 
-    if (vo.format.colorFamily != vi.format.colorFamily ||
-        vo.format.subSamplingW != vi.format.subSamplingW ||
+    if (vo.format.colorFamily != vi.format.colorFamily || vo.format.subSamplingW != vi.format.subSamplingW ||
         vo.format.subSamplingH != vi.format.subSamplingH) {
       return "NNVISR: incompatible out_format: Mistach color family or chroma subsampling";
     }
@@ -465,15 +462,15 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
     err = cudaMalloc((void **) &ioBuffer[0], 3 * input_y_size);
     if (err != cudaSuccess) {
       return "NNVISR: failed alloc " + std::to_string(3 * input_y_size) +
-          " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
-          cudaGetErrorString(cudaError_t(err)) + ").";
+             " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
+             cudaGetErrorString(cudaError_t(err)) + ").";
     }
 
     err = cudaMalloc((void **) &ioBuffer[1], 3 * output_y_size);
     if (err != cudaSuccess) {
       return "NNVISR: failed alloc " + std::to_string(3 * output_y_size) +
-          " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
-          cudaGetErrorString(cudaError_t(err)) + ").";
+             " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
+             cudaGetErrorString(cudaError_t(err)) + ").";
     }
 
     ioPointer[0] = ioBuffer[0];
@@ -508,15 +505,15 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
     err = cudaMalloc((void **) &ioBuffer[0], input_y_size + 2 * input_uv_size);
     if (err != cudaSuccess) {
       return "NNVISR: failed alloc " + std::to_string(input_y_size + 2 * input_uv_size) +
-          " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
-          cudaGetErrorString(cudaError_t(err)) + ").";
+             " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
+             cudaGetErrorString(cudaError_t(err)) + ").";
     }
 
     err = cudaMalloc((void **) &ioBuffer[1], output_y_size + 2 * output_uv_size);
     if (err != cudaSuccess) {
       return "NNVISR: failed alloc " + std::to_string(output_y_size + 2 * output_uv_size) +
-          " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
-          cudaGetErrorString(cudaError_t(err)) + ").";
+             " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
+             cudaGetErrorString(cudaError_t(err)) + ").";
     }
 
     ioPointer[0] = ioBuffer[0];
@@ -527,7 +524,7 @@ std::string NNVISRFilter::init1(const VSMap *in, VSCore *core, const VSAPI *vsap
     ioPointer[5] = ioBuffer[1] + output_y_size + output_uv_size;
   }
 
-  requested_frames = std::vector<const VSFrame *>{size_t(config.batch_extract + int(config.extra_frame)), nullptr};
+  requested_frames = std::vector<const VSFrame *> {size_t(config.batch_extract + int(config.extra_frame)), nullptr};
   return "";
 }
 
@@ -559,13 +556,10 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
   }
   switch (cur.cp) {
     case VSC_PRIMARIES_UNSPECIFIED:
-      vsapi->logMessage(mtWarning,
-                        "NNVISR: input color primaries unspecified. Assuming default (BT.709).",
-                        core);
+      vsapi->logMessage(mtWarning, "NNVISR: input color primaries unspecified. Assuming default (BT.709).", core);
       cur.cp = def.cp;
       break;
-    case VSC_PRIMARIES_ST240_M: cur.cp = VSC_PRIMARIES_ST170_M;
-      break;
+    case VSC_PRIMARIES_ST240_M: cur.cp = VSC_PRIMARIES_ST170_M; break;
   }
 
   cur.tc = VSTransferCharacteristics(vsapi->mapGetInt(frame_prop, "_Transfer", 0, &err));
@@ -580,8 +574,7 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
       break;
     case VSC_TRANSFER_BT601:
     case VSC_TRANSFER_BT2020_10:
-    case VSC_TRANSFER_BT2020_12: cur.tc = VSC_TRANSFER_BT709;
-      break;
+    case VSC_TRANSFER_BT2020_12: cur.tc = VSC_TRANSFER_BT709; break;
   }
 
   cur.mc = VSMatrixCoefficients(vsapi->mapGetInt(frame_prop, "_Matrix", 0, &err));
@@ -596,20 +589,14 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
   else if (color_family == VSColorFamily::cfYUV) {
     switch (cur.mc) {
       case VSC_MATRIX_RGB:
-        vsapi->logMessage(mtWarning,
-                          "NNVISR: YUV input must not use RGB Matrix, reset to default (BT.709).",
-                          core);
+        vsapi->logMessage(mtWarning, "NNVISR: YUV input must not use RGB Matrix, reset to default (BT.709).", core);
         cur.mc = def.mc;
-      case VSC_MATRIX_BT470_BG: cur.mc = VSC_MATRIX_ST170_M;
-        break;
+      case VSC_MATRIX_BT470_BG: cur.mc = VSC_MATRIX_ST170_M; break;
       case VSC_MATRIX_CHROMATICITY_DERIVED_NCL:
         switch (cur.cp) {
-          case VSC_PRIMARIES_BT709: cur.mc = VSC_MATRIX_BT709;
-            break;
-          case VSC_PRIMARIES_BT470_M: cur.mc = VSC_MATRIX_ST170_M;
-            break;
-          case VSC_PRIMARIES_BT2020: cur.mc = VSC_MATRIX_BT2020_NCL;
-            break;
+          case VSC_PRIMARIES_BT709: cur.mc = VSC_MATRIX_BT709; break;
+          case VSC_PRIMARIES_BT470_M: cur.mc = VSC_MATRIX_ST170_M; break;
+          case VSC_PRIMARIES_BT2020: cur.mc = VSC_MATRIX_BT2020_NCL; break;
         }
     }
   }
@@ -626,7 +613,7 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
     colorspace_folder = ss.str();
   }
 
-  ctx = new InferenceContext{config, *logger, engine_path / model / colorspace_folder};
+  ctx = new InferenceContext {config, *logger, engine_path / model / colorspace_folder};
 
   if (!ctx->has_file()) {
 #if defined(_MSC_VER) && !defined(IS_CONDA_BUILD)
@@ -657,34 +644,34 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
     // We don't know if user used "altsearchpath" when calling `LoadPlugin`.
     // Guess from whether user placed dependencies at the plugin directory.
     if (exists(plugin_path / "nvinfer_builder_resource.dll")) {
-      vsapi->logMessage(mtDebug,
-                        "NNVISR: dependencies under plugin path. Adding plugin directory to dll search directory.",
-                        core);
+      vsapi->logMessage(
+          mtDebug, "NNVISR: dependencies under plugin path. Adding plugin directory to dll search directory.", core);
       SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-      AddDllDirectory(std::filesystem::path(
-          vsapi->getPluginPath(vsapi->getPluginByID("dev.tyty.aim.nnvisr", core))).remove_filename().c_str());
+      AddDllDirectory(std::filesystem::path(vsapi->getPluginPath(vsapi->getPluginByID("dev.tyty.aim.nnvisr", core)))
+                          .remove_filename()
+                          .c_str());
     }
 #endif
 
     vsapi->logMessage(mtInformation, "NNVISR: building engine for current resolution. This will take some time.", core);
-    OptimizationContext optimize_ctx{{config.input_width,
-                                      config.input_height,
-                                      {1, config.batch_extract, config.batch_extract},
-                                      {1, config.batch_fusion, config.batch_fusion},
-                                      config.input_count,
-                                      config.feature_count,
-                                      config.extraction_layers,
-                                      config.extra_frame,
-                                      config.double_frame,
-                                      config.interpolation,
-                                      config.scale_factor_w,
-                                      config.scale_factor_h,
-                                      config.format,
-                                      config.use_fp16,
-                                      config.low_mem},
-                                     *logger,
-                                     model_path,
-                                     engine_path};
+    OptimizationContext optimize_ctx {{config.input_width,
+                                       config.input_height,
+                                       {1, config.batch_extract, config.batch_extract},
+                                       {1, config.batch_fusion, config.batch_fusion},
+                                       config.input_count,
+                                       config.feature_count,
+                                       config.extraction_layers,
+                                       config.extra_frame,
+                                       config.double_frame,
+                                       config.interpolation,
+                                       config.scale_factor_w,
+                                       config.scale_factor_h,
+                                       config.format,
+                                       config.use_fp16,
+                                       config.low_mem},
+                                      *logger,
+                                      model_path,
+                                      engine_path};
     err = optimize_ctx.optimize(model / colorspace_folder);
     if (err) {
       return "NNVISR: failed building engine for current input dimension";
@@ -698,7 +685,7 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
     return "NNVISR: failed init context";
   }
 
-  session = new InferenceSession{*ctx};
+  session = new InferenceSession {*ctx};
   if (!session->good()) {
     delete session;
     delete ctx;
@@ -737,15 +724,15 @@ std::string NNVISRFilter::init2(const VSFrame *frame, VSCore *core, const VSAPI 
           pPrimaries = colorPrimariesTable[0].primaries;
         }
 
-        const auto [rX, rY, gX, gY, bX, bY, wX, wY] = (const float (&)[8]) (*pPrimaries);
+        const auto [rX, rY, gX, gY, bX, bY, wX, wY] = (const float(&)[8])(*pPrimaries);
         float const rZ = 1.0f - (rX + rY);
         float const gZ = 1.0f - (gX + gY);
         float const bZ = 1.0f - (bX + bY);
         float const wZ = 1.0f - (wX + wY);
         kr = (rY * (wX * (gY * bZ - bY * gZ) + wY * (bX * gZ - gX * bZ) + wZ * (gX * bY - bX * gY))) /
-            (wY * (rX * (gY * bZ - bY * gZ) + gX * (bY * rZ - rY * bZ) + bX * (rY * gZ - gY * rZ)));
+             (wY * (rX * (gY * bZ - bY * gZ) + gX * (bY * rZ - rY * bZ) + bX * (rY * gZ - gY * rZ)));
         kb = (bY * (wX * (rY * gZ - gY * rZ) + wY * (gX * rZ - rX * gZ) + wZ * (rX * gY - gX * rY))) /
-            (wY * (rX * (gY * bZ - bY * gZ) + gX * (bY * rZ - rY * bZ) + bX * (rY * gZ - gY * rZ)));
+             (wY * (rX * (gY * bZ - bY * gZ) + gX * (bY * rZ - rY * bZ) + bX * (rY * gZ - gY * rZ)));
       }
       else {
         bool found = false;
@@ -824,31 +811,26 @@ std::string NNVISRFilter::readPlane(md_view<F, 2> dst, md_uview<const U, 2> src,
                           session->stream);
   }
   else {
-    err = cudaMemcpy2DAsync(cuda_tmp.data,
-                            cuda_tmp.at(0).size() * sizeof(U),
-                            src.data,
-                            src.at(0).size() * sizeof(U),
-                            cuda_tmp.at(0).size() * sizeof(U),
-                            cuda_tmp.shape[0],
-                            cudaMemcpyHostToDevice,
+    err = cudaMemcpy2DAsync(cuda_tmp.data, cuda_tmp.at(0).size() * sizeof(U), src.data, src.stride[0] * sizeof(U),
+                            cuda_tmp.at(0).size() * sizeof(U), cuda_tmp.shape[0], cudaMemcpyHostToDevice,
                             session->stream);
   }
 
   if (err != cudaSuccess) {
     return "NNVISR: failed copy " + std::to_string(cuda_tmp.size() * sizeof(U)) +
-        " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
-        cudaGetErrorString(cudaError_t(err)) + ").";
+           " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
+           cudaGetErrorString(cudaError_t(err)) + ").";
   }
 
   import_pixel<F, U>(dst, cuda_tmp, a, b, session->stream);
-  trace("put input " + describe(dst));
+  //  trace("put input " + describe(dst));
   return "";
 }
 
 template<class F, class U>
 std::string NNVISRFilter::writePlane(md_uview<U, 2> dst, md_view<const F, 2> src, md_view<U, 2> cuda_tmp, float a,
                                      float b, float min, float max) {
-  trace("get output " + describe(src));
+  //  trace("get output " + describe(src));
   export_pixel<F, U>(cuda_tmp, src, a, b, min, max, session->stream);
 
   int err;
@@ -856,23 +838,17 @@ std::string NNVISRFilter::writePlane(md_uview<U, 2> dst, md_view<const F, 2> src
     auto dst_c = dst.as_view();
 
     err = cudaMemcpyAsync(dst_c.data, cuda_tmp.data, dst_c.size() * sizeof(U), cudaMemcpyDeviceToHost, session->stream);
-
   }
   else {
-    err = cudaMemcpy2DAsync(dst.data,
-                            dst.at(0).size() * sizeof(U),
-                            cuda_tmp.data,
-                            cuda_tmp.at(0).size() * sizeof(U),
-                            cuda_tmp.at(0).size() * sizeof(U),
-                            cuda_tmp.shape[0],
-                            cudaMemcpyHostToDevice,
+    err = cudaMemcpy2DAsync(dst.data, dst.stride[0] * sizeof(U), cuda_tmp.data, cuda_tmp.at(0).size() * sizeof(U),
+                            cuda_tmp.at(0).size() * sizeof(U), cuda_tmp.shape[0], cudaMemcpyDeviceToHost,
                             session->stream);
   }
 
   if (err != cudaSuccess) {
     return "NNVISR: failed copy " + std::to_string(cuda_tmp.size() * sizeof(U)) +
-        " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
-        cudaGetErrorString(cudaError_t(err)) + ").";
+           " bytes of CUDA memory: " + cudaGetErrorName(cudaError_t(err)) + " (" +
+           cudaGetErrorString(cudaError_t(err)) + ").";
   }
 
   return "";
@@ -931,6 +907,7 @@ std::string NNVISRFilter::uploadRGB(offset_t position, const VSFrame *frame, con
                                  {reinterpret_cast<U *>(ioPointer[2]), input_shape_y}};
 
   for (int i = 0; i < 3; ++i) {
+    //    trace("input position " + std::to_string(position) + " writing to " + describe(session->input.at(position, i)));
     uint8_t *tensor_ptr = session->input.at(position, i).data;
 
     std::string result;
@@ -1013,6 +990,7 @@ std::string NNVISRFilter::downloadRGB(offset_t position, VSFrame *frame, const V
   //  trace("output position " + std::to_string(position) + " is " + describe(idx));
 
   for (int i = 0; i < 3; ++i) {
+    //    trace("output position " + std::to_string(position) + " reading from " + describe(session->output.at(idx).at(i)));
     uint8_t *tensor_ptr = session->output.at(idx).at(i).data;
 
     std::string result;
@@ -1035,13 +1013,13 @@ std::string NNVISRFilter::downloadRGB(offset_t position, VSFrame *frame, const V
 std::string NNVISRFilter::requestFrames(int n, VSFrameContext *frameCtx, const VSAPI *vsapi) {
   //  auto request = [&](int i) { vsapi->requestFrameFilter(i, node, frameCtx); };
   auto request = [&](int i) {
-//        trace("requesting in frame #" + std::to_string(i));
+    //        trace("requesting in frame #" + std::to_string(i));
     vsapi->requestFrameFilter(i, node, frameCtx);
   };
 
   if (last_output_frame + 1 != n) {
     return "NNVISR: unexpected request: non-linear frame request, requesting " + std::to_string(n) + " after " +
-        std::to_string(last_output_frame);
+           std::to_string(last_output_frame);
   }
   last_output_frame = n;
 
@@ -1085,17 +1063,20 @@ std::string NNVISRFilter::requestFrames(int n, VSFrameContext *frameCtx, const V
   }
 
   extract_begin = extract_end;
+  //  trace("extract_begin at " + std::to_string(extract_begin));
   auto count = config.batch_extract;
   if (start_of_scene && config.extra_frame) {
     ++count;
   }
   extract_end = std::min(num_frames, extract_begin + count);
+  //  trace("extract_end temporarily at " + std::to_string(extract_end));
   //  trace("SOB out frame " + std::to_string(n) + ", SOC: " + std::to_string(start_of_scene) + ", requesting " +
   //        std::to_string(extract_begin) + "-" + std::to_string(extract_end));
   if (extract_begin == extract_end) {
     // extra_frame mode, last frame was consumed by last batch
     assert(extract_begin != 0);
     --extract_begin;
+    //    trace("extract_begin adjust to " + std::to_string(extract_begin));
   }
   for (int32_t i = extract_begin; i < extract_end; ++i) {
     request(i);
@@ -1109,7 +1090,7 @@ std::string NNVISRFilter::requestFrames(int n, VSFrameContext *frameCtx, const V
 std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VSAPI *vsapi) {
   auto getFrame = [&, this](int k) {
     auto frame = k == 0 ? first_frame : vsapi->getFrameFilter(k, node, frameCtx);
-//        trace("acquire in frame #" + std::to_string(k));
+    //        trace("acquire in frame #" + std::to_string(k));
     return frame;
   };
   auto loadFrameAt = [&](const VSFrame *frame_in, int32_t offset) -> std::string {
@@ -1173,6 +1154,7 @@ std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VS
         if (vsapi->mapGetInt(vsapi->getFramePropertiesRO(requested_frames[0]), "_SceneChangePrev", 0, &err)) {
           end_of_scene = true;
           extract_end = extract_begin + 1;
+          //          trace("extract_end at " + std::to_string(extract_end) + ", eos");
         }
       }
       else {
@@ -1189,6 +1171,7 @@ std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VS
       if (vsapi->mapGetInt(vsapi->getFramePropertiesRO(frame_in), "_SceneChangePrev", 0, &err)) {
         end_of_scene = true;
         extract_end = extract_begin + loaded_frames;
+        //        trace("extract_end at " + std::to_string(extract_end) + ", eos");
         break;
       }
     }
@@ -1216,6 +1199,7 @@ std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VS
         session->duplicateExtractOutput(recycle_begin + i, i);
       }
       extract_begin -= recycle_frames;// always the first frame number in feature buffer (extract output)
+                                      //      trace("extract_begin adjust to " + std::to_string(extract_begin));
       fusion_in_begin = extract_begin;
     }
 
@@ -1233,7 +1217,7 @@ std::string NNVISRFilter::prepareFrame(int n, VSFrameContext *frameCtx, const VS
     if (recycle_frames > 1 || loaded_frames < config.batch_extract) {
       // we recycled frame from last batch, or don't have enough frame to make a batch,
       // which makes remain frames non-contiguous so can't be batched
-//      trace("non-full batch");
+      //      trace("non-full batch");
       for (int i = 0; i < loaded_frames; ++i) {
         loadFrameAt(requested_frames[recycle_frames + i], 0);
         //        trace("batch frame " + std::to_string(recycle_frames + i) + " is placed at position " +
@@ -1384,11 +1368,11 @@ std::string NNVISRFilter::extractFrame(int n, const VSFrame *&frame, VSCore *cor
   }
   frame = n_frame;
   if (free_src) {
-//    trace("free frame " + std::to_string(n / 2));
+    //    trace("free frame " + std::to_string(n / 2));
     vsapi->freeFrame(requested_frames[src_index]);
     requested_frames[src_index] = nullptr;
     if (end_of_scene && n + 1 == extract_end) {
-//      trace("free frame " + std::to_string(n / 2 + 1));
+      //      trace("free frame " + std::to_string(n / 2 + 1));
       vsapi->freeFrame(requested_frames[src_index + 1]);
       requested_frames[src_index + 1] = nullptr;
     }
@@ -1447,9 +1431,8 @@ NNVISRFilter::~NNVISRFilter() {
 // ---------------------------------------------------------------------------------------------------------------------
 // VS API
 
-static const VSFrame *VS_CC
-NNVISRGetFrame(int n, int activationReason, void *instanceData, void **frameData,
-               VSFrameContext *frameCtx, VSCore *core, const VSAPI *vsapi) {
+static const VSFrame *VS_CC NNVISRGetFrame(int n, int activationReason, void *instanceData, void **frameData,
+                                           VSFrameContext *frameCtx, VSCore *core, const VSAPI *vsapi) {
   auto *filter = static_cast<NNVISRFilter *>(instanceData);
   std::string err;
 
@@ -1479,7 +1462,7 @@ NNVISRGetFrame(int n, int activationReason, void *instanceData, void **frameData
       return nullptr;
     }
 
-    const VSFrame *out{};
+    const VSFrame *out {};
     err = filter->extractFrame(n, out, core, vsapi);
     if (err.empty()) {
       err = filter->synchronize();
@@ -1494,8 +1477,7 @@ NNVISRGetFrame(int n, int activationReason, void *instanceData, void **frameData
   return nullptr;
 }
 
-static void VS_CC
-NNVISRFree(void *instanceData, VSCore *, const VSAPI *vsapi) {
+static void VS_CC NNVISRFree(void *instanceData, VSCore *, const VSAPI *vsapi) {
   auto *d = static_cast<NNVISRFilter *>(instanceData);
   vsapi->freeNode(d->node);
   for (auto f: d->requested_frames) {
@@ -1506,8 +1488,7 @@ NNVISRFree(void *instanceData, VSCore *, const VSAPI *vsapi) {
   delete d;
 }
 
-static void VS_CC
-NNVISRCreate(const VSMap *in, VSMap *out, void *, VSCore *core, const VSAPI *vsapi) {
+static void VS_CC NNVISRCreate(const VSMap *in, VSMap *out, void *, VSCore *core, const VSAPI *vsapi) {
   auto filter = new NNVISRFilter();
   auto err = filter->init1(in, core, vsapi);
   if (!err.empty()) {
@@ -1523,8 +1504,7 @@ NNVISRCreate(const VSMap *in, VSMap *out, void *, VSCore *core, const VSAPI *vsa
   vsapi->freeNode(out_node);
 }
 
-static void VS_CC
-dependencyVersion(const VSMap *, VSMap *out, void *, VSCore *, const VSAPI *vsapi) {
+static void VS_CC dependencyVersion(const VSMap *, VSMap *out, void *, VSCore *, const VSAPI *vsapi) {
   vsapi->mapSetData(out, "tensorrt_version", std::to_string(getInferLibVersion()).c_str(), -1, ptData, maReplace);
 
   vsapi->mapSetData(out, "tensorrt_version_build", std::to_string(NV_TENSORRT_VERSION).c_str(), -1, ptData, maReplace);
@@ -1538,10 +1518,7 @@ dependencyVersion(const VSMap *, VSMap *out, void *, VSCore *, const VSAPI *vsap
 }
 
 VS_EXTERNAL_API(void)
-VapourSynthPluginInit2(VSPlugin
-                       *plugin,
-                       const VSPLUGINAPI *vspapi
-) {
+VapourSynthPluginInit2(VSPlugin *plugin, const VSPLUGINAPI *vspapi) {
   UDOLayers::registerPlugins();
   vspapi->configPlugin("dev.tyty.aim.nnvisr", "nnvisr", "Neural Network Video Interpolation / Super Resolution Filter",
                        VS_MAKE_VERSION(1, 0), VAPOURSYNTH_API_VERSION, 0, plugin);

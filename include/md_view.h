@@ -263,6 +263,11 @@ struct md_view {
     return data[shape.offset(indexes...)];
   }
 
+template<class... Tp>
+constexpr util_attrs std::enable_if_t<sizeof...(Tp) == DIMS, T *> ptr(Tp... indexes) const noexcept {
+    return &at(indexes...);
+}
+
   template<size_t SDIMS, typename = std::enable_if_t<SDIMS<DIMS>> constexpr util_attrs md_view<T, DIMS - SDIMS> at(
                              const shape_t<SDIMS> &offsets) const noexcept {
     ptrdiff_t offset = shape.offset(offsets);

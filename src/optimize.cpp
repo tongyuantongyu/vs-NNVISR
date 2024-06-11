@@ -118,6 +118,12 @@ static std::string ff_engine_name(const OptimizationConfig &config) {
   return ss.str();
 }
 
+// Eww...
+template<typename T>
+static std::unique_ptr<T> make_unique_from_raw(T *ptr) {
+  return std::unique_ptr<T>(ptr);
+}
+
 nvinfer1::IBuilderConfig *OptimizationContext::prepareConfig() const {
   auto conf = builder->createBuilderConfig();
   if (config.use_fp16) {
@@ -128,9 +134,11 @@ nvinfer1::IBuilderConfig *OptimizationContext::prepareConfig() const {
   conf->setFlag(nvinfer1::BuilderFlag::kPREFER_PRECISION_CONSTRAINTS);
   // /usr/src/tensorrt/bin/trtexec --verbose --noDataTransfers --useCudaGraph --separateProfileRun --useSpinWait --nvtxMode=verbose --loadEngine=./mutual_cycle.engine --exportTimes=./mutual_cycle.timing.json --exportProfile=./mutual_cycle.profile.json --exportLayerInfo=./mutual_cycle.graph.json --timingCacheFile=./timing.cache --best --avgRuns=1000 "--shapes=lf0:1x64x180x270,lf1:1x64x180x270,lf2:1x64x180x270"
   conf->setProfilingVerbosity(nvinfer1::ProfilingVerbosity::kDETAILED);
-  conf->setTacticSources(conf->getTacticSources() & ~nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kCUDNN)));
+  conf->setTacticSources(conf->getTacticSources() &
+                         ~nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kCUDNN)));
   if (config.low_mem) {
-    conf->setTacticSources(conf->getTacticSources() & ~nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kEDGE_MASK_CONVOLUTIONS)));
+    conf->setTacticSources(conf->getTacticSources() &
+                           ~nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kEDGE_MASK_CONVOLUTIONS)));
   }
 
   if (cache != nullptr) {
@@ -145,15 +153,14 @@ nvinfer1::INetworkDefinition *OptimizationContext::createNetwork() const {
 }
 
 OptimizationContext::OptimizationContext(OptimizationConfig config, nvinfer1::ILogger &logger,
-                                         std::filesystem::path path_prefix_,
-                                         std::filesystem::path path_engine_)
+                                         std::filesystem::path path_prefix_, std::filesystem::path path_engine_)
     : config(config), logger(logger), path_prefix(std::move(path_prefix_)), path_engine(std::move(path_engine_)),
-      builder(nvinfer1::createInferBuilder(logger)), cache(nullptr), prop {}, total_memory {} {
+      builder(nvinfer1::createInferBuilder(logger)), runtime(nvinfer1::createInferRuntime(logger)), cache(nullptr),
+      prop {}, total_memory {} {
   if (!builder) {
     logger.log(nvinfer1::ILogger::Severity::kINTERNAL_ERROR, "Cannot create infer builder");
     return;
   }
-  auto conf = builder->createBuilderConfig();
   cudaMemGetInfo(nullptr, &total_memory);
   cudaGetDeviceProperties(&prop, 0);
   logger.log(nvinfer1::ILogger::Severity::kINFO,
@@ -168,16 +175,16 @@ OptimizationContext::OptimizationContext(OptimizationConfig config, nvinfer1::IL
 
   auto cache_file = path_engine / "timing.cache";
   std::ifstream input(cache_file, std::ios::binary | std::ios::in);
+  auto conf = make_unique_from_raw(builder->createBuilderConfig());
   if (input.is_open()) {
     auto size = std::filesystem::file_size(cache_file);
-    auto *values = new char[size];
-    input.read(values, size);
-    cache = conf->createTimingCache(values, size);
-    delete[] values;
+    auto values = std::make_unique<char[]>(size);
+    input.read(values.get(), size);
+    cache.reset(conf->createTimingCache(values.get(), size));
     input.close();
   }
   if (cache == nullptr) {
-    cache = conf->createTimingCache(nullptr, 0);
+    cache.reset(conf->createTimingCache(nullptr, 0));
   }
 }
 
@@ -221,47 +228,45 @@ int OptimizationContext::optimize(const std::filesystem::path &folder) {
 }
 
 int OptimizationContext::buildFeatureExtract(std::vector<uint8_t> input, const std::filesystem::path &output) {
-  auto network = createNetwork();
+  auto network = make_unique_from_raw(createNetwork());
   auto profile = builder->createOptimizationProfile();
-  auto parser = nvonnxparser::createParser(*network, logger);
+  auto parser = make_unique_from_raw(nvonnxparser::createParser(*network, logger));
   COND_CHECK_EMPTY(parser->parse(input.data(), input.size()), "Failed parse source model.");
   input.clear();
 
   auto ioDataType = config.use_fp16 ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
 
-  for (int32_t i = 0; i < config.input_count; ++i) {
-    if (config.format == IOFormat::RGB) {
-      profile->setDimensions(
-          "rgb", nvinfer1::OptProfileSelector::kMIN,
-          nvinfer1::Dims4 {config.batch_extract.min, 3, config.input_height.min, config.input_width.min});
-      profile->setDimensions(
-          "rgb", nvinfer1::OptProfileSelector::kOPT,
-          nvinfer1::Dims4 {config.batch_extract.opt, 3, config.input_height.opt, config.input_width.opt});
-      profile->setDimensions(
-          "rgb", nvinfer1::OptProfileSelector::kMAX,
-          nvinfer1::Dims4 {config.batch_extract.max, 3, config.input_height.max, config.input_width.max});
-    }
-    else {
-      profile->setDimensions(
-          "y", nvinfer1::OptProfileSelector::kMIN,
-          nvinfer1::Dims4 {config.batch_extract.min, 1, config.input_height.min, config.input_width.min});
-      profile->setDimensions(
-          "y", nvinfer1::OptProfileSelector::kOPT,
-          nvinfer1::Dims4 {config.batch_extract.opt, 1, config.input_height.opt, config.input_width.opt});
-      profile->setDimensions(
-          "y", nvinfer1::OptProfileSelector::kMAX,
-          nvinfer1::Dims4 {config.batch_extract.max, 1, config.input_height.max, config.input_width.max});
+  if (config.format == IOFormat::RGB) {
+    profile->setDimensions(
+        "rgb", nvinfer1::OptProfileSelector::kMIN,
+        nvinfer1::Dims4 {config.batch_extract.min, 3, config.input_height.min, config.input_width.min});
+    profile->setDimensions(
+        "rgb", nvinfer1::OptProfileSelector::kOPT,
+        nvinfer1::Dims4 {config.batch_extract.opt, 3, config.input_height.opt, config.input_width.opt});
+    profile->setDimensions(
+        "rgb", nvinfer1::OptProfileSelector::kMAX,
+        nvinfer1::Dims4 {config.batch_extract.max, 3, config.input_height.max, config.input_width.max});
+  }
+  else {
+    profile->setDimensions(
+        "y", nvinfer1::OptProfileSelector::kMIN,
+        nvinfer1::Dims4 {config.batch_extract.min, 1, config.input_height.min, config.input_width.min});
+    profile->setDimensions(
+        "y", nvinfer1::OptProfileSelector::kOPT,
+        nvinfer1::Dims4 {config.batch_extract.opt, 1, config.input_height.opt, config.input_width.opt});
+    profile->setDimensions(
+        "y", nvinfer1::OptProfileSelector::kMAX,
+        nvinfer1::Dims4 {config.batch_extract.max, 1, config.input_height.max, config.input_width.max});
 
-      profile->setDimensions(
-          "uv", nvinfer1::OptProfileSelector::kMIN,
-          nvinfer1::Dims4 {config.batch_extract.min, 2, config.input_height.min / 2, config.input_width.min / 2});
-      profile->setDimensions(
-          "uv", nvinfer1::OptProfileSelector::kOPT,
-          nvinfer1::Dims4 {config.batch_extract.opt, 2, config.input_height.opt / 2, config.input_width.opt / 2});
-      profile->setDimensions(
-          "uv", nvinfer1::OptProfileSelector::kMAX,
-          nvinfer1::Dims4 {config.batch_extract.max, 2, config.input_height.max / 2, config.input_width.max / 2});
-    }
+    profile->setDimensions(
+        "uv", nvinfer1::OptProfileSelector::kMIN,
+        nvinfer1::Dims4 {config.batch_extract.min, 2, config.input_height.min / 2, config.input_width.min / 2});
+    profile->setDimensions(
+        "uv", nvinfer1::OptProfileSelector::kOPT,
+        nvinfer1::Dims4 {config.batch_extract.opt, 2, config.input_height.opt / 2, config.input_width.opt / 2});
+    profile->setDimensions(
+        "uv", nvinfer1::OptProfileSelector::kMAX,
+        nvinfer1::Dims4 {config.batch_extract.max, 2, config.input_height.max / 2, config.input_width.max / 2});
   }
 
   for (int i = 0; i < network->getNbInputs(); ++i) {
@@ -273,11 +278,11 @@ int OptimizationContext::buildFeatureExtract(std::vector<uint8_t> input, const s
   }
   logger.log(nvinfer1::ILogger::Severity::kINFO, "Done define feature extract net.");
 
-  auto optimize_config = prepareConfig();
+  auto optimize_config = make_unique_from_raw(prepareConfig());
   // value from experience
   //  optimize_config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, total_memory / 24);
   optimize_config->addOptimizationProfile(profile);
-  auto modelStream = builder->buildSerializedNetwork(*network, *optimize_config);
+  auto modelStream = make_unique_from_raw(builder->buildSerializedNetwork(*network, *optimize_config));
   COND_CHECK_EMPTY(modelStream != nullptr, "Failed build feature extract net.");
   logger.log(nvinfer1::ILogger::Severity::kINFO, "Done build feature extract net.");
 
@@ -287,15 +292,40 @@ int OptimizationContext::buildFeatureExtract(std::vector<uint8_t> input, const s
   COND_CHECK_EMPTY(p.is_open(), "Unable to open engine file for output.");
   p.write(static_cast<const char *>(modelStream->data()), modelStream->size());
   p.close();
+
+  auto engine = make_unique_from_raw(runtime->deserializeCudaEngine(modelStream->data(), modelStream->size()));
+  auto inspector = make_unique_from_raw(engine->createEngineInspector());
+  auto context = make_unique_from_raw(engine->createExecutionContextWithoutDeviceMemory());
+  context->setOptimizationProfileAsync(0, nullptr);
+  cudaStreamSynchronize(nullptr);
+
+  if (config.format == IOFormat::RGB) {
+    context->setInputShape(
+        "rgb", nvinfer1::Dims4 {config.batch_extract.opt, 3, config.input_height.opt, config.input_width.opt});
+  }
+  else {
+    context->setInputShape(
+        "y", nvinfer1::Dims4 {config.batch_extract.opt, 1, config.input_height.opt, config.input_width.opt});
+    context->setInputShape(
+        "uv", nvinfer1::Dims4 {config.batch_extract.opt, 2, config.input_height.opt / 2, config.input_width.opt / 2});
+  }
+  COND_CHECK_EMPTY(context->inferShapes(0, nullptr) == 0, "Unknown extra input found");
+  inspector->setExecutionContext(context.get());
+  auto path_layers = output;
+  path_layers.replace_extension(".layers.json");
+  std::ofstream info(path_layers, std::ios::binary);
+  info << inspector->getEngineInformation(nvinfer1::LayerInformationFormat::kJSON);
+  info.close();
+
   logger.log(nvinfer1::ILogger::Severity::kINFO, "Done save feature extract net.");
 
   return 0;
 }
 
 int OptimizationContext::buildFeatureFusion(std::vector<uint8_t> input, const std::filesystem::path &output) {
-  auto network = createNetwork();
+  auto network = make_unique_from_raw(createNetwork());
   auto profile = builder->createOptimizationProfile();
-  auto parser = nvonnxparser::createParser(*network, logger);
+  auto parser = make_unique_from_raw(nvonnxparser::createParser(*network, logger));
   COND_CHECK_EMPTY(parser->parse(input.data(), input.size()), "Failed parse source model.");
   input.clear();
 
@@ -333,11 +363,11 @@ int OptimizationContext::buildFeatureFusion(std::vector<uint8_t> input, const st
   }
   logger.log(nvinfer1::ILogger::Severity::kINFO, "Done define feature fusion net.");
 
-  auto optimize_config = prepareConfig();
+  auto optimize_config = make_unique_from_raw(prepareConfig());
   // value from experience
   //  optimize_config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, total_memory / 2);
   optimize_config->addOptimizationProfile(profile);
-  auto modelStream = builder->buildSerializedNetwork(*network, *optimize_config);
+  auto modelStream = make_unique_from_raw(builder->buildSerializedNetwork(*network, *optimize_config));
   COND_CHECK_EMPTY(modelStream != nullptr, "Failed build feature fusion net.");
   logger.log(nvinfer1::ILogger::Severity::kINFO, "Done build feature fusion net.");
 
@@ -347,6 +377,32 @@ int OptimizationContext::buildFeatureFusion(std::vector<uint8_t> input, const st
   COND_CHECK_EMPTY(p.is_open(), "Unable to open engine file for output.");
   p.write(static_cast<const char *>(modelStream->data()), modelStream->size());
   p.close();
+
+  auto engine = make_unique_from_raw(runtime->deserializeCudaEngine(modelStream->data(), modelStream->size()));
+  auto inspector = make_unique_from_raw(engine->createEngineInspector());
+  auto context = make_unique_from_raw(engine->createExecutionContextWithoutDeviceMemory());
+  context->setOptimizationProfileAsync(0, nullptr);
+  cudaStreamSynchronize(nullptr);
+
+  auto opt_height = config.input_height.opt;
+  auto opt_width = config.input_width.opt;
+  for (int i = 0; i < config.extraction_layers; ++i) {
+    for (int j = 0; j < config.input_count; ++j) {
+      auto name = "f" + std::to_string((config.interpolation ? 2 : 1) * j) + "l" + std::to_string(i);
+      context->setInputShape(
+          name.c_str(), nvinfer1::Dims4 {config.batch_fusion.opt, config.feature_count, opt_height, opt_width});
+    }
+    opt_height = ceil_half(opt_height);
+    opt_width = ceil_half(opt_width);
+  }
+  COND_CHECK_EMPTY(context->inferShapes(0, nullptr) == 0, "Unknown extra input found");
+  inspector->setExecutionContext(context.get());
+  auto path_layers = output;
+  path_layers.replace_extension(".layers.json");
+  std::ofstream info(path_layers, std::ios::binary);
+  info << inspector->getEngineInformation(nvinfer1::LayerInformationFormat::kJSON);
+  info.close();
+
   logger.log(nvinfer1::ILogger::Severity::kINFO, "Done save feature fusion net.");
 
   return 0;

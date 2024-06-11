@@ -22,8 +22,9 @@ class OptimizationContext {
   std::filesystem::path path_prefix;
   std::filesystem::path path_engine;
 
-  nvinfer1::IBuilder *builder;
-  nvinfer1::ITimingCache *cache;
+  std::unique_ptr<nvinfer1::IBuilder> builder;
+  std::unique_ptr<nvinfer1::IRuntime> runtime;
+  std::unique_ptr<nvinfer1::ITimingCache> cache;
 
   cudaDeviceProp prop;
   size_t total_memory;

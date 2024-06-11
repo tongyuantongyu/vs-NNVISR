@@ -12,13 +12,12 @@
 template<>
 template<>
 util_attrs hw<half>::operator hw<offset_t>() const noexcept {
-  return {static_cast<offset_t>(static_cast<long long>(h)),
-          static_cast<offset_t>(static_cast<long long>(w))};
+  return {static_cast<offset_t>(static_cast<long long>(h)), static_cast<offset_t>(static_cast<long long>(w))};
 }
 #endif
 
-constexpr std::size_t threadCount = 1024;
-constexpr std::size_t threadCountIm2Col = 512;
+constexpr std::size_t threadCount = 256;
+constexpr std::size_t threadCountIm2Col = 256;
 
 struct im2col_parameters {
   hw<> stride;
@@ -44,11 +43,8 @@ half __device__ ceil(const half f) {
 
 // Gather data from coordination. Use bilinear interpolation.
 template<class F>
-static inline F __device__ DCNGather(const md_view<const F, 4> &input,
-                                      offset_t n,
-                                      offset_t c,
-                                      hw<offset_t> pos,
-                                      hw<F> offset) {
+static inline F __device__ DCNGather(const md_view<const F, 4> &input, offset_t n, offset_t c, hw<offset_t> pos,
+                                     hw<F> offset) {
   const F z {};
   F result {};
 
@@ -94,7 +90,9 @@ template<class F, uint32_t K>
 static void __global__ DCNIm2colKernel(md_view<const F, 4> input, md_view<const F, 7> offset, md_view<const F, 6> mask,
                                        md_view<F, 6> col, im2col_parameters p, offset_t count) {
   offset_t idx = threadIdx.x + blockDim.x * blockIdx.x;
-  if (idx >= count) { return; }
+  if (idx >= count) {
+    return;
+  }
 
   const auto [n, c, h, w] = col.shape.template gather<0, 1, 4, 5>().indexes(idx);
   // kernel h, w
@@ -118,9 +116,7 @@ static void __global__ DCNIm2colKernel(md_view<const F, 4> input, md_view<const 
 
 // Broadcast bias to output result.
 template<class F>
-static void __global__ BiasBroadcastKernel(md_view<F, 4> output,
-                                           md_view<const F, 1> bias,
-                                           offset_t count) {
+static void __global__ BiasBroadcastKernel(md_view<F, 4> output, md_view<const F, 1> bias, offset_t count) {
   offset_t idx = threadIdx.x + blockDim.x * blockIdx.x;
   if (idx >= count) {
     return;
@@ -132,10 +128,8 @@ static void __global__ BiasBroadcastKernel(md_view<F, 4> output,
 
 // Add bias to output result.
 template<class F>
-static void __global__ BiasActivationKernel(md_view<F, 4> output,
-                                            md_view<const F, 1> bias,
-                                            bias_activation_parameters<F> p,
-                                            offset_t count) {
+static void __global__ BiasActivationKernel(md_view<F, 4> output, md_view<const F, 1> bias,
+                                            bias_activation_parameters<F> p, offset_t count) {
   offset_t idx = threadIdx.x + blockDim.x * blockIdx.x;
   if (idx >= count) {
     return;
@@ -180,7 +174,7 @@ void compute(DCNLayerInput<F> inputs, DCNLayerOutput<F> outputs, DCNLayerConfig 
   std::size_t count = inputs.im2col_buffer.shape.template gather<0, 1, 4, 5>().count();
   auto blocks = (count + threadCountIm2Col - 1) / threadCountIm2Col;
 
-  im2col_parameters im2col_p{
+  im2col_parameters im2col_p {
       config.stride, config.padding, config.dilation,
       int32_t((inputs.input.shape[1] + config.deformable_groups - 1) / config.deformable_groups)};
 
@@ -225,6 +219,7 @@ void compute(DCNLayerInput<F> inputs, DCNLayerOutput<F> outputs, DCNLayerConfig 
       CUBLAS_GEMM_DEFAULT);
 
   assert(cublasResult == CUBLAS_STATUS_SUCCESS);
+  (void) (cublasResult);
 
   // Fuse bias and activation, if there are.
   if (config.activation_type != -1) {
@@ -236,13 +231,7 @@ void compute(DCNLayerInput<F> inputs, DCNLayerOutput<F> outputs, DCNLayerConfig 
 }
 
 // Explicit template instantiation. Keep these after template definition.
-template void compute<float>(DCNLayerInput<float> inputs,
-                             DCNLayerOutput<float> outputs,
-                             DCNLayerConfig config,
-                             DCNLayerExtra extra,
-                             cudaStream_t stream);
-template void compute<half>(DCNLayerInput<half> inputs,
-                            DCNLayerOutput<half> outputs,
-                            DCNLayerConfig config,
-                            DCNLayerExtra extra,
-                            cudaStream_t stream);
+template void compute<float>(DCNLayerInput<float> inputs, DCNLayerOutput<float> outputs, DCNLayerConfig config,
+                             DCNLayerExtra extra, cudaStream_t stream);
+template void compute<half>(DCNLayerInput<half> inputs, DCNLayerOutput<half> outputs, DCNLayerConfig config,
+                            DCNLayerExtra extra, cudaStream_t stream);

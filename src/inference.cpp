@@ -353,6 +353,7 @@ void InferenceSession::fusionBatch(int32_t batch) {
       layer_height = ceil_half(layer_height);
     }
     last_batch.feature_fusion = batch;
+    COND_CHECK(context.feature_fusion->inferShapes(0, nullptr) == 0, "model has extra unknown inputs");
   }
 
   if (last_offset_out.feature_fusion == -1) {
