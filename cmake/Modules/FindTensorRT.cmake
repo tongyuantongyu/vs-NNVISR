@@ -1,15 +1,6 @@
 find_path(TensorRT_INCLUDE_DIR
         NAMES NvInfer.h)
 
-find_library(TensorRT_LIBRARY
-        NAMES nvinfer)
-
-if (TensorRT_LIBRARY)
-    set(TensorRT_LIBRARIES
-            ${TensorRT_LIBRARIES}
-            ${TensorRT_LIBRARY})
-endif (TensorRT_LIBRARY)
-
 function(_tensorrt_get_version)
     unset(TensorRT_VERSION_STRING PARENT_SCOPE)
     set(_hdr_file "${TensorRT_INCLUDE_DIR}/NvInferVersion.h")
@@ -34,6 +25,15 @@ endfunction(_tensorrt_get_version)
 
 _tensorrt_get_version()
 
+find_library(TensorRT_LIBRARY
+        NAMES nvinfer "nvinfer_${TensorRT_VERSION_MAJOR}")
+
+if (TensorRT_LIBRARY)
+    set(TensorRT_LIBRARIES
+            ${TensorRT_LIBRARIES}
+            ${TensorRT_LIBRARY})
+endif (TensorRT_LIBRARY)
+
 if(TensorRT_FIND_COMPONENTS)
     list(REMOVE_ITEM Boost_FIND_COMPONENTS "nvinfer")
 
@@ -42,7 +42,7 @@ if(TensorRT_FIND_COMPONENTS)
                 NAMES NvOnnxParser.h)
 
         find_library(TensorRT_OnnxParser_LIBRARY
-                NAMES nvonnxparser)
+                NAMES nvonnxparser "nvonnxparser_${TensorRT_VERSION_MAJOR}")
         if (TensorRT_OnnxParser_LIBRARY AND TensorRT_LIBRARIES)
             set(TensorRT_LIBRARIES
                     ${TensorRT_LIBRARIES}
@@ -56,7 +56,7 @@ if(TensorRT_FIND_COMPONENTS)
                 NAMES NvInferPlugin.h)
 
         find_library(TensorRT_Plugin_LIBRARY
-                NAMES nvinfer_plugin)
+                NAMES nvinfer_plugin "nvinfer_plugin_${TensorRT_VERSION_MAJOR}")
 
         if (TensorRT_Plugin_LIBRARY AND TensorRT_LIBRARIES)
             set(TensorRT_LIBRARIES

@@ -20,3 +20,10 @@ c_stdlib_version:              # [linux]
 tensorrt_version:
   - 8.6
   - 10.0
+
+# TODO: nvcc bug
+c_compiler_version:     # [win]
+  - 19.39               # [win]
+
+cxx_compiler_version:   # [win]
+  - 19.39               # [win]

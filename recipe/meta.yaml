@@ -1,5 +1,6 @@
 {% set name = "VapourSynth-NNVISR" %}
 {% set version = "1.0.0a6" %}
+{% set build = 0 %}
 
 package:
   name: {{ name|lower }}
@@ -9,7 +10,7 @@ source:
   - path: ../
 
 build:
-  number: 0
+  number: {{ build }}
 
 requirements:
   build:
@@ -24,10 +25,10 @@ requirements:
     - cuda-version  >=12
     - cuda-cudart-dev
     - libcublas-dev
-    - libnvinfer-dev
-    - vapoursynth
+    - libnvinfer-dev {{ tensorrt_version }}
+    - vapoursynth  >=67
   run:
-    - vapoursynth
+    - vapoursynth  >=67
 
 about:
   home: https://github.com/tongyuantongyu/vs-NNVISR

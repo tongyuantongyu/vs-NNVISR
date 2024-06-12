@@ -6,5 +6,5 @@ if %ERRORLEVEL% neq 0 exit 1
 ninja vs-nnvisr
 if %ERRORLEVEL% neq 0 exit 1
 
-mkdir %PREFIX%\vapoursynth64\plugins
-copy vs-nnvisr.dll %PREFIX%\vapoursynth64\plugins\vs-nnvisr.dll
+mkdir %PREFIX%\vs-plugins
+copy vs-nnvisr.dll %PREFIX%\vs-plugins\vs-nnvisr.dll
