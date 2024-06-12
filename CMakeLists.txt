@@ -99,6 +99,7 @@ if(MSVC AND CONDA_BUILD_TWEAK)
     target_link_options(vs-nnvisr PUBLIC
             /DELAYLOAD:cudart64_12.dll
             /DELAYLOAD:cublas64_12.dll
-            /DELAYLOAD:nvinfer.dll
-            /DELAYLOAD:nvonnxparser.dll)
+            /DELAYLOAD:$<TARGET_FILE_NAME:TensorRT::NvInfer>
+            /DELAYLOAD:$<TARGET_FILE_NAME:TensorRT::OnnxParser>
+    )
 endif()
