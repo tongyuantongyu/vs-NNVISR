@@ -21,22 +21,21 @@ function(_tensorrt_get_version)
     file(STRINGS "${_hdr_file}" VERSION_STRINGS REGEX "#define NV_TENSORRT_.*")
 
     foreach(TYPE MAJOR MINOR PATCH BUILD)
-        string(REGEX MATCH "NV_TENSORRT_${TYPE} [0-9]" TRT_TYPE_STRING ${VERSION_STRINGS})
-        string(REGEX MATCH "[0-9]" TensorRT_VERSION_${TYPE} ${TRT_TYPE_STRING})
+        string(REGEX MATCH "NV_TENSORRT_${TYPE} [0-9]+" TRT_TYPE_STRING ${VERSION_STRINGS})
+        string(REGEX MATCH "[0-9]+" TensorRT_VERSION_${TYPE} ${TRT_TYPE_STRING})
     endforeach(TYPE)
 
     set(TensorRT_VERSION_MAJOR ${TensorRT_VERSION_MAJOR} PARENT_SCOPE)
     set(TensorRT_VERSION_MINOR ${TensorRT_VERSION_MINOR} PARENT_SCOPE)
     set(TensorRT_VERSION_PATCH ${TensorRT_VERSION_PATCH} PARENT_SCOPE)
-    set(TensorRT_VERSION_BUILD ${TensorRT_VERSION_BUILD} PARENT_SCOPE)
 
-    set(TensorRT_VERSION_STRING "${TensorRT_VERSION_MAJOR}.${TensorRT_VERSION_MINOR}.${TensorRT_VERSION_PATCH}.${TensorRT_VERSION_BUILD}" PARENT_SCOPE)
+    set(TensorRT_VERSION_STRING "${TensorRT_VERSION_MAJOR}.${TensorRT_VERSION_MINOR}.${TensorRT_VERSION_PATCH}" PARENT_SCOPE)
 endfunction(_tensorrt_get_version)
 
 _tensorrt_get_version()
 
 if(TensorRT_FIND_COMPONENTS)
-    list(REMOVE_ITEM TensorRT_FIND_COMPONENTS "nvinfer")
+    list(REMOVE_ITEM Boost_FIND_COMPONENTS "nvinfer")
 
     if ("OnnxParser" IN_LIST TensorRT_FIND_COMPONENTS)
         find_path(TensorRT_OnnxParser_INCLUDE_DIR
