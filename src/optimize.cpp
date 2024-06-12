@@ -136,6 +136,8 @@ nvinfer1::IBuilderConfig *OptimizationContext::prepareConfig() const {
   conf->setProfilingVerbosity(nvinfer1::ProfilingVerbosity::kDETAILED);
   conf->setTacticSources(conf->getTacticSources() &
                          ~nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kCUDNN)));
+  conf->setTacticSources(conf->getTacticSources() |
+                         nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kCUBLAS)));
   if (config.low_mem) {
     conf->setTacticSources(conf->getTacticSources() &
                            ~nvinfer1::TacticSources(1u << int32_t(nvinfer1::TacticSource::kEDGE_MASK_CONVOLUTIONS)));
