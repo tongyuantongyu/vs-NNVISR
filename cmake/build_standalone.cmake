@@ -85,6 +85,17 @@ if (${TENSORRT_VERSION} STREQUAL 8.6)
             SUBBUILD_DIR build_dependencies/cache
     )
     execute_process(COMMAND cmake -E copy_directory build_dependencies/_cudnn build_dependencies/cuda)
+
+    if (WIN32)
+        FetchContent_Populate(
+                zlibwapi
+                URL "http://www.winimage.com/zLibDll/zlib123dllx64.zip"
+                SOURCE_DIR build_dependencies/_zlibwapi
+                BINARY_DIR build_dependencies/cache
+                SUBBUILD_DIR build_dependencies/cache
+        )
+        execute_process(COMMAND cmake -E copy build_dependencies/_zlibwapi/dll_x64/zlibwapi.dll build_dependencies/cuda/bin/zlibwapi.dll)
+    endif ()
 else ()
     if (WIN32)
         set(TENSORRT_URL "https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/10.0.1/zip/TensorRT-10.0.1.6.Windows10.win10.cuda-12.4.zip")

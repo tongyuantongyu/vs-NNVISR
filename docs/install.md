@@ -40,6 +40,11 @@ NNVISR depends on TensorRT version 8.6 or 10.0 and CUDA 12 (cudart and cuBLAS co
 For manual installation you have to place the DLL libraries along with NNVISR.
 Additionally, for TensorRT 8.6, NNVISR may use cuDNN depending on the network.
 
+Dependencies for TensorRT 8.6 version can be downloaded at [here](https://github.com/tongyuantongyu/vs-NNVISR/releases/download/assets/deps.windows.trt8.6.7z).
+Dependencies for TensorRT 10.0 version can be downloaded at [here](https://github.com/tongyuantongyu/vs-NNVISR/releases/download/assets/deps.windows.trt10.0.7z).
+
+You can also download libraries from their official source:
+
 `TensorRT` can be downloaded at
 [TensorRT Download page](https://developer.nvidia.com/tensorrt/download).
 
