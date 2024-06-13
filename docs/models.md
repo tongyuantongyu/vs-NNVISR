@@ -23,7 +23,7 @@ model_path
 For a manual installation with default `model_path`,
 your VapoursSynth plugin folder should look like this:
 ```
-vapoursynth64
+vs-plugins
 ├── vs-nnvisr.dll
 └── dev.tyty.aim.nnvisr
     └── models
@@ -62,9 +62,9 @@ Paper:
 Paper:
 [Spatial-Temporal Space Hand-in-Hand: Spatial-Temporal Video Super-Resolution via Cycle-Projected Mutual Learning](https://arxiv.org/abs/2205.05264)
 
-| SR | Input Frames | Interpolation | Format | CP/TC/MC | Download                                                                                     | Config                                                                                                                                                                                          | Note                                                         |
-|----|--------------|---------------|--------|----------|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| 2x | 2            | ✅             | YUV420 | 1/1/1    | [Link](https://github.com/tongyuantongyu/vs-NNVISR/releases/download/assets/cycmunet-2x.zip) | ```{'scale_factor': 2, 'input_count': 2, 'feature_count': 64, 'extraction_layers': 4, 'interpolation': True, 'extra_frame': True, 'double_frame': True, 'model': 'cycmunet/vimeo90k-deblur'}``` | Trained on Vimeo90k triplet dataset with random blur applied |
+| SR | Input Frames | Interpolation | Format | CP/TC/MC | Download                                                                                     | Config                                                                                                                                                                                                                                                                 | Note                                                         |
+|----|--------------|---------------|--------|----------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
+| 2x | 2            | ✅             | YUV420 | 1/1/1    | [Link](https://github.com/tongyuantongyu/vs-NNVISR/releases/download/assets/cycmunet-2x.zip) | ```{'scale_factor': 2, 'input_count': 2, 'feature_count': 64, 'extraction_layers': 4, 'interpolation': True, 'extra_frame': True, 'double_frame': True, 'model': 'cycmunet/vimeo90k-deblur', 'norm_mean': [0.485, 0.456, 0.406], 'norm_std': [0.229, 0.224, 0.225]}``` | Trained on Vimeo90k triplet dataset with random blur applied |
 
 ## VideoINR
 
