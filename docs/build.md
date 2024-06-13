@@ -2,26 +2,43 @@
 
 Building NNVISR requires a compiler supporting C++20 and CUDA Compiler >= 12.
 
-## Dependencies
+## Automatic build
 
-### Linux
+We provide an automatic build script for NNVISR. Please clone the repository
+and run the following command:
+
+```bash
+cmake -P cmake/build_standalone.cmake
+```
+
+You should have CMake and a working C++ compiler installed and visible.
+On Windows this means you should run the script in
+Visual Studio Developer Command Prompt. The script will automatically
+fetch CUDA compiler and dependencies.
+
+On Linux you should have `patchelf` tool installed
+
+After the build, you can find NNVISR and dependency libraries under `artifact`
+folder.
+
+## Manual build
+
+You can also build NNVISR manually. Be aware that on Windows, if you plan to
+place dependency DLLs in `PATH` rather than along with NNVISR, you should use
+`altsearchpath=True` option when loading NNVISR in VapourSynth.
+
+### Dependencies
+
+#### Linux
 
 You can follow the instructions on
 [CUDA website](https://developer.nvidia.com/cuda-downloads)
-to install the complete CUDAToolkit on your system.
+to install CUDA Toolkit on your system.
 You can also install from your distribution's default repository,
-given it provides a recent enough version of CUDAToolkit.
-If you prefer a minimal installation with only components required to
-build and run NNVISR, you can set up CUDA repository by choosing the
-network installer type, but instead of the all-in-one cuda package,
-install these packages:
-
-```
-cuda-compiler-12-1 cuda-cudart-dev-12-1 libcublas-dev-12-1
-```
+given it provides a recent enough version of CUDA Toolkit (>= 12.0).
 
 If you are on Ubuntu 18.04, 20.04, 22.04, RHEL 7 or 8, you can also
-install tensorrt packages from CUDA repository for TensorRT,
+install TensorRT packages from CUDA repository for TensorRT,
 or individual components required by NNVISR:
 
 ```
@@ -35,9 +52,8 @@ For other systems, you can download TensorRT from
 
 Follow the instructions on
 [CUDA website](https://developer.nvidia.com/cuda-downloads)
-to install CUDAToolkit on your system.
-
-Download TensorRT from [TensorRT Website](https://developer.nvidia.com/tensorrt).
+to install CUDA Toolkit on your system, and download
+TensorRT from [TensorRT Website](https://developer.nvidia.com/tensorrt).
 
 # Build
 
@@ -45,7 +61,7 @@ NNVISR uses CMake to build. You can clone the repo and run the following
 commands to build NNVISR:
 
 ```bash
-mkdir build
+mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --target vs-nnvisr
 ```
@@ -53,7 +69,7 @@ cmake --build . --target vs-nnvisr
 The NNVISR plugin executable `vs-nnvisr.dll` or `libvs-nnvisr.so` should be
 available under build folder.
 
-If CMake is unable to find CUDAToolkit on your system,
+If CMake is unable to find CUDA Toolkit on your system,
 you can add the definition
 
 ```

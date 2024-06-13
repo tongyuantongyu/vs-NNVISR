@@ -72,3 +72,5 @@ _*
 *.cache
 *.y4m
 *.ffindex
+
+weights

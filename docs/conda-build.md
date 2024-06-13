@@ -29,25 +29,11 @@ Run the following command to start build process on Linux:
 conda build -c conda-forge -c local <path-to-cloned-repository>
 ```
 
-CUDA packages on `conda-forge` channel is currently incomplete on Windows,
-so you need to add NVIDIA's conda channel as well:
-
-```
-conda build -c conda-forge -c nvidia -c local <path-to-cloned-repository>
-```
-
-The build process will take a while. After it finished, you will have
+The build process will take some time. After it finished, you will have
 `vapoursynth-nnvisr` package available in your `local` conda channel.
 Now you can run:
 
 ```
 conda install -c conda-forge -c local vapoursynth-nnvisr
 ```
-
-on Linux or
-
-```
-conda install -c conda-forge -c nvidia -c local vapoursynth-nnvisr
-```
-
-on Windows to install your just built `vapoursynth-nnvisr` package.
+to install your fresh built `vapoursynth-nnvisr` package.

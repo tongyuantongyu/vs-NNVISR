@@ -1,7 +1,7 @@
 # Model Integration
 
 NNVISR supports loading any model following a general interface defined below.
-Example model files are available at
+Model files integrated by us are available at
 [Models](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/models.md).
 
 ## Model requirement
@@ -9,14 +9,14 @@ Example model files are available at
 NNVISR supports neural network models working on a definite number of
 consecutive frames.
 
-Let's define `n` as the frame your network "consumes" for each run, or,
-the index of the first input frame, if in last run, that index is 0.
-Then you network should take either `n` or `n + 1`
-consecutive frames as input and `n` or `2 n` frames as output.
-If network outputs `n` frames, they can be treated as either frames
+Define `n` as the frame your network "consumes" for each run, or,
+the difference of indexes of the first input frame between two consecutive inference.
+Your network should take either `n` or `n + 1`
+consecutive frames as input, and `n` or `2 n` frames as output.
+If network outputs `n` frames, it can be treated as either frames
 at the same timestamp of input frames (therefore replaced input frames)
 or frames at intermediate timestamp (therefore interleaved with input frames).
-If network outputs `2 n` frames, they always replace input frames.
+If network outputs `2 n` frames, it always replaces input frames with output ones.
 
 The network should be separated into 2 parts: Extract and Fusion.
 Extract part should work on individual frame to produce either one
@@ -26,25 +26,25 @@ as input and outputs `n` or `2 n` frames.
 
 Note that you can always let Extract part be an identity model. But if it's
 possible, separating frame-independent part out can reduce repetitive work
-and reach higher performance.
+and achieve higher performance.
 
 Model can accept input and produce output in either RGB or YUV420 format
 in NCHW layout.
 For RGB I/O, `C` will be 3. For YUV420 I/O, The model should accept
 two input tensors for each frame: the Y input `C` will be 1; the UV input
-`C` will be 2, and `HW` ceiling half of Y input's `HW`. Output works likewise.
+`C` will be 2, and `HW` will be ceiling half of Y input's `HW`. Output works similarly.
 
 ## Model format
 
 NNVISR accepts neural network models in ONNX format.
 
-### Naming of I/O
+### Naming for Input & Output
 
 NNVISR uses a systematic naming to recognize each input and output.
 Your provided model file should follow this naming to be correctly
 loaded by NNVISR.
 
-Let's define `m` as the number of layers Extract model produces.
+Define `m` as the number of layers Extract model produces.
 
 #### Extract model
 
@@ -54,7 +54,7 @@ or 2 inputs each named `y` and `uv` for YUV420 frame input.
 Extract model should have `m` outputs, each named `l{i}`. For example,
 if network produces 3 layers of pyramid, then model outputs should be
 named `l0`, `l1`, `l2`. `l0` is the output with the same `HW` as input,
-`l1`'s `HW` is ceiling half of `l0`, and so on.
+`l1`'s `HW` is the ceiling half of `l0`, and so on.
 
 #### Fusion model
 
@@ -107,9 +107,9 @@ integers of input dimension multiplies scale factor.
 
 ## Non-standard Network operators
 
-TensorRT does not have very wide support for neural network operators.
+TensorRT may not support some special neural network operators.
 
-Specially, NNVISR provides the Deformable Convolution (DCN) implementation
+Specially, NNVISR provides the Deformable Convolution (DCNv2) implementation
 for TensorRT, so networks using DCNs are supported by NNVISR without further
 work. For NNVISR to correctly recognize DCN operator in your model, use
 namespace `custom` and name `DeformConv2d`.
@@ -145,7 +145,7 @@ All model files should be put into a folder with name of your choice (can also h
 This name is used as the `model` argument when calling NNVISR filter.
 
 Inside it should be a number of folders to specify the I/O frame
-characteristics of your network, which stores the actual model files in ONNX
+characteristics of your network, which contains the actual model files in ONNX
 format. For networks with RGB I/O, folder name
 should be `rgb_{primary}_{transfer}`;
 for networks with YUV I/O, folder name should be
@@ -156,7 +156,7 @@ parameter of the same name.
 These numbers should be determined based on your dataset.
 If you are not sure, they are usually `primary=1`, `transfer=1` and `matrix=6`.
 However, we recommend train YUV network with configurations of `matrix=1`,
-since it's more widely used by videos.
+since it's more widely used in videos.
 
 Refer to [Models](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/models.md) page
 for examples to arrange model files.
@@ -168,9 +168,9 @@ network. Extract model should be named
 `fe_n{input_count}_{scale_factor}x{scale_factor_h}_l{extraction_layers}.onnx`,
 and Fusion model named
 `ff_n{input_count}_{scale_factor}x{scale_factor_h}_l{extraction_layers}.onnx`.
-For example, for a network accepting 3 frames for each run, scales width to 4x
+For example, in a network accepting 3 frames for each run, scales width to 4x
 and height to 2x, and produces 3 extraction layers, the Extract model should
-be named `fe_n3_4x2_l3.onnx` and Fusion `ff_n3_4x2_l3.onnx`.
+be named `fe_n3_4x2_l3.onnx` and Fusion named `ff_n3_4x2_l3.onnx`.
 For network with YUV420 I/O, append `_yuv1-1` to the name before extension.
 The network with same configuration should then be named
 `fe_n3_4x2_l3_yuv1-1.onnx` and `ff_n3_4x2_l3_yuv1-1.onnx` respectively.

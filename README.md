@@ -1,13 +1,9 @@
 # NNVISR
 
-## WIP: We are still working on adding more stuffs to the repository. Please check again later.
-
-##
-
 The Neural Network Video Interpolation / Super Resolution Filter of VapourSynth.
 
-NNVISR is able to load any window-based video enhancement neural network
-and use it to process your video.
+NNVISR is able to use any window-based video enhancement neural network
+to process your video.
 
 ## Release status on conda
 
@@ -20,6 +16,8 @@ and use it to process your video.
 To install NNVISR on your system, see [Installation](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/install.md).
 
 To learn how to use NNVISR, see [Usage](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/usage.md).
+
+Available models made by us can be found at [Models](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/models.md).
 
 To know how to let NNVISR load your model, see [Model Integration](https://github.com/tongyuantongyu/vs-NNVISR/blob/main/docs/integration.md).
 

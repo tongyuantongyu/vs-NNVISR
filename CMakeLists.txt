@@ -85,7 +85,7 @@ set_target_properties(nnvisr PROPERTIES
 
 add_library(reformat_cuda OBJECT include/reformat.h src/reformat.cu)
 
-add_library(vs-nnvisr SHARED src/vs-plugin.cpp)
+add_library(vs-nnvisr MODULE src/vs-plugin.cpp)
 target_link_libraries(vs-nnvisr PRIVATE nnvisr reformat_cuda VapourSynth)
 set_target_properties(vs-nnvisr PROPERTIES
         C_VISIBILITY_PRESET hidden
@@ -103,3 +103,5 @@ if(MSVC AND CONDA_BUILD_TWEAK)
             /DELAYLOAD:$<TARGET_FILE_NAME:TensorRT::OnnxParser>
     )
 endif()
+
+install(TARGETS vs-nnvisr LIBRARY DESTINATION ".")
