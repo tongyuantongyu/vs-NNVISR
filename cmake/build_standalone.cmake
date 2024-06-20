@@ -159,7 +159,7 @@ endif ()
 
 file(COPY ${DEPENDENCY_LIBRARIES} DESTINATION ${CMAKE_SOURCE_DIR}/artifact)
 
-if (NOT WIN32)
+if (NOT WIN32 AND ${TENSORRT_VERSION} STREQUAL 8.6)
     find_program(PATCHELF_PROGRAM patchelf)
     if (PATCHELF_PROGRAM)
         file(GLOB TRT_ONNXPARSER "${CMAKE_SOURCE_DIR}/artifact/libnvonnxparser.so.*.*.*")

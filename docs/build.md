@@ -4,19 +4,24 @@ Building NNVISR requires a compiler supporting C++20 and CUDA Compiler >= 12.
 
 ## Automatic build
 
-We provide an automatic build script for NNVISR. Please clone the repository
-and run the following command:
+We provide an automatic build script for NNVISR. 
+
+Before running the script,
+you should have CMake and a working C++ compiler installed and visible.
+On Windows, this means you should run the script in
+Visual Studio Developer Command Prompt.
+We strongly recommend installing [`ninja`](https://ninja-build.org/). The build script
+will automatically use `ninja` during build if present.
+The script will automatically fetch CUDA compiler and dependencies.
+
+If you are building with TensorRT 8.6 on Linux, `patchelf` tool should be installed
+or built binary may not be able to find their dependencies.
+
+To run the automatic build, please clone the repository and run the following command:
 
 ```bash
 cmake -P cmake/build_standalone.cmake
 ```
-
-You should have CMake and a working C++ compiler installed and visible.
-On Windows this means you should run the script in
-Visual Studio Developer Command Prompt. The script will automatically
-fetch CUDA compiler and dependencies.
-
-On Linux you should have `patchelf` tool installed
 
 After the build, you can find NNVISR and dependency libraries under `artifact`
 folder.
@@ -37,7 +42,7 @@ to install CUDA Toolkit on your system.
 You can also install from your distribution's default repository,
 given it provides a recent enough version of CUDA Toolkit (>= 12.0).
 
-If you are on Ubuntu 18.04, 20.04, 22.04, RHEL 7 or 8, you can also
+If you are on Ubuntu or RHEL, you can also
 install TensorRT packages from CUDA repository for TensorRT,
 or individual components required by NNVISR:
 
