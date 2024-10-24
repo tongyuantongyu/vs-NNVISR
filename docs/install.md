@@ -10,7 +10,7 @@ or Linux x64 platform, and you already have a conda installation on your system.
 To create a new environment named `nnvisr` and install NNVISR, run:
 
 ```
-conda create -n nnvisr -c conda-forge -c tongyuantongyu --overide-channels vapoursynth-nnvisr
+conda create -n nnvisr -c conda-forge -c tongyuantongyu --override-channels vapoursynth-nnvisr
 ```
 
 You can also install the VapourSynth BestSource plugin `vapoursynth-bestsource`
